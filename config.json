@@ -3,7 +3,7 @@
   "shortName": "exportpdf",
   "version": "1.0.0",
   "author": "Georgy69",
-  "description": "Export device information to PDF",
+  "description": "Экспорт информации об устройстве в PDF",
   "hasAdminPanel": false,
   "homepage": "https://github.com/Georgy69/exportpdf",
   "changelogUrl": "https://raw.githubusercontent.com/Georgy69/exportpdf/main/changelog.md",
