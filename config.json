@@ -2,17 +2,17 @@
   "name": "Export Device Info to PDF",
   "shortName": "exportpdf",
   "version": "1.0.0",
-  "author": "Your Name",
+  "author": "Georgy69",
   "description": "Export device information to PDF",
   "hasAdminPanel": false,
-  "homepage": "https://example.com",
-  "changelogUrl": "https://example.com/changelog.md",
-  "configUrl": "https://your-server.com/exportpdf/config.json",
-  "downloadUrl": "https://your-server.com/exportpdf.zip",
+  "homepage": "https://github.com/Georgy69/exportpdf",
+  "changelogUrl": "https://raw.githubusercontent.com/Georgy69/exportpdf/main/changelog.md",
+  "configUrl": "https://raw.githubusercontent.com/Georgy69/exportpdf/main/config.json",
+  "downloadUrl": "https://github.com/Georgy69/exportpdf/archive/refs/heads/main.zip",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/exportpdf.git"
+    "url": "https://github.com/Georgy69/exportpdf.git"
   },
-  "versionHistoryUrl": "https://api.github.com/repos/yourusername/exportpdf/tags",
+  "versionHistoryUrl": "https://api.github.com/repos/Georgy69/exportpdf/tags",
   "meshCentralCompat": ">=0.4.3"
 }
