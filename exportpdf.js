@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = function (parent) {
-    // Имя плагина должно совпадать с shortName в config.json
     const pluginShortName = 'exportpdf';
     console.log(`[${pluginShortName}] Plugin loading...`);
 
@@ -9,7 +8,6 @@ module.exports = function (parent) {
     // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
     // -------------------------------------------------------------------------
     
-    // Безопасное экранирование HTML
     function escapeHtml(str) { 
         if (!str && str !== 0) return ''; 
         return String(str)
@@ -20,47 +18,23 @@ module.exports = function (parent) {
             .replace(/'/g, "&#039;");
     }
 
-    // Генерация красивого HTML отчета
     function generateReportHtml(deviceNode) {
-        if (!deviceNode) return '<html><body>No device data</body></html>';
+        if (!deviceNode) return '<html><body>No data</body></html>';
 
         const now = new Date().toLocaleString();
         const name = escapeHtml(deviceNode.name);
-        const os = escapeHtml(deviceNode.osdesc || deviceNode.os || 'Unknown OS');
+        const os = escapeHtml(deviceNode.osdesc || deviceNode.os || 'Unknown');
         const agentVer = escapeHtml(deviceNode.agentVersion || 'N/A');
         const lastConnect = deviceNode.lastConnectTime ? new Date(deviceNode.lastConnectTime).toLocaleString() : 'Never';
         const group = escapeHtml(deviceNode.group || 'No Group');
         
-        // Сбор IP адресов (если доступны в объекте deviceNode, обычно они там есть при активном соединении)
         let ipList = 'N/A';
         if (deviceNode.ipaddr) {
-            if (Array.isArray(deviceNode.ipaddr)) {
-                ipList = deviceNode.ipaddr.join(', ');
-            } else {
-                ipList = escapeHtml(deviceNode.ipaddr);
-            }
+            ipList = Array.isArray(deviceNode.ipaddr) ? deviceNode.ipaddr.join(', ') : escapeHtml(deviceNode.ipaddr);
         }
 
-        // CSS стили для печати
-        const cssStyles = `
-            <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; margin: 40px; }
-                h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-                h2 { color: #2980b9; margin-top: 30px; font-size: 1.2em; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
-                th { background-color: #f2f2f2; width: 30%; font-weight: bold; }
-                tr:hover { background-color: #f5f5f5; }
-                .footer { margin-top: 50px; font-size: 0.8em; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
-                .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: bold; }
-                .online { background-color: #d4edda; color: #155724; }
-                .offline { background-color: #f8d7da; color: #721c24; }
-            </style>
-        `;
-
-        // Определение статуса
-        const isOnline = deviceNode.conn === 1; // Обычно 1 означает онлайн в MeshCentral
-        const statusClass = isOnline ? 'online' : 'offline';
+        const isOnline = deviceNode.conn === 1;
+        const statusColor = isOnline ? '#28a745' : '#dc3545';
         const statusText = isOnline ? 'Online' : 'Offline';
 
         return `
@@ -69,83 +43,51 @@ module.exports = function (parent) {
 <head>
     <meta charset="UTF-8">
     <title>Device Report: ${name}</title>
-    ${cssStyles}
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+        h1 { border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; width: 30%; }
+        .status { color: white; padding: 5px 10px; border-radius: 4px; background-color: ${statusColor}; }
+        .footer { margin-top: 40px; font-size: 0.8em; color: #777; text-align: center; }
+    </style>
 </head>
 <body>
-    <h1>Отчет об устройстве: ${name}</h1>
-    
+    <h1>Отчет: ${name}</h1>
     <table>
-        <tr>
-            <th>Имя устройства</th>
-            <td>${name}</td>
-        </tr>
-        <tr>
-            <th>Статус</th>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-        </tr>
-        <tr>
-            <th>Операционная система</th>
-            <td>${os}</td>
-        </tr>
-        <tr>
-            <th>Версия агента</th>
-            <td>${agentVer}</td>
-        </tr>
-        <tr>
-            <th>IP Адрес(а)</th>
-            <td>${ipList}</td>
-        </tr>
-        <tr>
-            <th>Группа</th>
-            <td>${group}</td>
-        </tr>
-        <tr>
-            <th>Последнее подключение</th>
-            <td>${lastConnect}</td>
-        </tr>
+        <tr><th>Статус</th><td><span class="status">${statusText}</span></td></tr>
+        <tr><th>ОС</th><td>${os}</td></tr>
+        <tr><th>Версия агента</th><td>${agentVer}</td></tr>
+        <tr><th>IP Адрес</th><td>${ipList}</td></tr>
+        <tr><th>Группа</th><td>${group}</td></tr>
+        <tr><th>Последнее подключение</th><td>${lastConnect}</td></tr>
     </table>
-
-    <div class="footer">
-        Сгенерировано MeshCentral Plugin "Export PDF" | Дата формирования: ${now}
-    </div>
-
-    <script>
-        // Автоматически вызываем печать при загрузке окна, если нужно
-        // window.print(); 
-    </script>
+    <div class="footer">Сгенерировано: ${now}</div>
 </body>
-</html>
-        `;
+</html>`;
     }
 
-    // Функция для открытия окна печати с нашим отчетом
     function printReport(deviceNode) {
         const reportHtml = generateReportHtml(deviceNode);
         const printWindow = window.open('', '_blank', 'width=800,height=600');
-        
         if (!printWindow) {
-            alert('Пожалуйста, разрешите всплывающие окна для этого сайта, чтобы сохранить PDF.');
+            alert('Разрешите всплывающие окна для сохранения PDF!');
             return;
         }
-
         printWindow.document.write(reportHtml);
-        printWindow.document.close(); // Важно для завершения загрузки документа
+        printWindow.document.close();
         printWindow.focus();
-        
-        // Небольшая задержка перед печатью, чтобы стили успели примениться
-        setTimeout(() => {
-            printWindow.print();
-            // Окно не закрываем автоматически, чтобы пользователь мог проверить результат
-        }, 500);
+        setTimeout(() => { printWindow.print(); }, 500);
     }
 
     // -------------------------------------------------------------------------
-    // ОСНОВНОЙ ОБЪЕКТ ПЛАГИНА
+    // ПЛАГИН
     // -------------------------------------------------------------------------
     const plugin = {};
 
     plugin[pluginShortName] = {
-        // 1. Регистрируем вкладку
+        // 1. Регистрация вкладки
         registerPluginTab: function () {
             return {
                 tabId: pluginShortName,
@@ -153,63 +95,54 @@ module.exports = function (parent) {
             };
         },
 
-        // 2. Хук при выборе устройства
+        // 2. Событие при выборе/обновлении устройства
         onDeviceRefreshEnd: function (parentObj, nodeId, deviceNode) {
-            // Проверяем, активна ли наша вкладка
+            // Проверяем, активна ли наша вкладка сейчас
             if (parentObj.tabIsActive(pluginShortName)) {
                 this.renderContent(parentObj, deviceNode);
             }
         },
 
-        // 3. Отрисовка интерфейса внутри вкладки
+        // 3. Отрисовка содержимого вкладки
         renderContent: function (parentObj, deviceNode) {
             if (!deviceNode) {
-                parentObj.tabContent(pluginShortName, '<p>Нет данных об устройстве.</p>');
+                parentObj.tabContent(pluginShortName, '<p>Нет данных.</p>');
                 return;
             }
 
+            // HTML интерфейс вкладки
             const tabHtml = `
-                <div style="padding: 20px; font-family: sans-serif;">
-                    <h3>📄 Экспорт данных устройства</h3>
+                <div style="padding: 20px;">
+                    <h3>Экспорт в PDF</h3>
                     <p>Устройство: <strong>${escapeHtml(deviceNode.name)}</strong></p>
-                    <p>Нажмите кнопку ниже, чтобы сформировать PDF-отчет с основной информацией.</p>
-                    
-                    <button id="export-pdf-action-btn" style="padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
-                        Создать и скачать PDF
+                    <button id="btn-export-pdf" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Скачать PDF
                     </button>
-                    
-                    <div id="export-status" style="margin-top: 15px; color: #555;"></div>
+                    <div id="export-msg" style="margin-top: 10px; color: green;"></div>
                 </div>
             `;
-            
-            // Вставляем HTML во вкладку
+
+            // Вставляем HTML
             parentObj.tabContent(pluginShortName, tabHtml);
 
-            // Добавляем обработчик события
+            // Добавляем обработчик клика
             setTimeout(() => {
-                const actionButton = document.getElementById('export-pdf-action-btn');
-                if (actionButton) {
-                    // Очищаем предыдущие обработчики клонированием узла
-                    const newButton = actionButton.cloneNode(true);
-                    actionButton.parentNode.replaceChild(newButton, actionButton);
+                const btn = document.getElementById('btn-export-pdf');
+                if (btn) {
+                    // Удаляем старые слушатели через клонирование
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
                     
-                    newButton.onclick = () => {
-                        const statusDiv = document.getElementById('export-status');
-                        if (statusDiv) statusDiv.innerHTML = '⏳ Подготовка отчета...';
-                        
-                        try {
-                            printReport(deviceNode);
-                            if (statusDiv) statusDiv.innerHTML = '✅ Окно печати открыто. Выберите "Сохранить как PDF".';
-                        } catch (e) {
-                            console.error(e);
-                            if (statusDiv) statusDiv.innerHTML = '❌ Ошибка при генерации отчета.';
-                        }
-                    };
+                    newBtn.addEventListener('click', () => {
+                        document.getElementById('export-msg').innerText = 'Подготовка...';
+                        printReport(deviceNode);
+                        document.getElementById('export-msg').innerText = 'Готово! Проверьте окно печати.';
+                    });
                 }
             }, 100);
         }
     };
-    
-    console.log(`[${pluginShortName}] Plugin initialized successfully.`);
+
+    console.log(`[${pluginShortName}] Ready.`);
     return plugin;
 };
