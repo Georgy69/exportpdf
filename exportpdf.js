@@ -1,7 +1,10 @@
 'use strict';
 
 module.exports = function (parent) {
-    console.log('[exportpdf] Плагин экспорта в PDF загружен (с отдельной вкладкой)');
+    let myparent = parent;
+    const pluginName = 'exportpdf'; // Должно совпадать с shortName в config.json
+    
+    console.log('[exportpdf] Плагин экспорта в PDF загружен (по образу ScriptTask)');
     
     // Функция генерации HTML отчета (та же, что и раньше)
     function generateDeviceReportHTML(node) {
@@ -122,7 +125,8 @@ module.exports = function (parent) {
                     <tbody>
                         ${node.netif.map(net => `<tr><td>${escapeHtml(net.name)}</td><td>${escapeHtml(net.ip4Address || net.ip4 || net.ip || 'Н/Д')}</td><td>${escapeHtml(net.mac || 'Н/Д')}</td></tr>`).join('')}
                     </tbody>
-                    </div>
+                    </table>
+                </div>
             </div>
             ` : ''}
         </div>
@@ -148,136 +152,139 @@ module.exports = function (parent) {
         setTimeout(() => printWindow.close(), 1000);
     }
     
-    // Получение данных об устройстве
-    function getCurrentDeviceData() {
-        return new Promise((resolve) => {
-            // Пытаемся получить из глобального состояния
-            if (window.parent && window.parent.meshcentral && window.parent.meshcentral.currentDevice) {
-                resolve(window.parent.meshcentral.currentDevice);
+    // Функция для получения данных об устройстве с сервера
+    function getDeviceData(nodeid, callback) {
+        const server = myparent.GetServer();
+        const db = server.GetDB();
+        
+        db.GetNodeById(nodeid, (err, node) => {
+            if (err || !node) {
+                console.error('[exportpdf] Ошибка получения данных устройства:', err);
+                callback(null);
                 return;
             }
-            if (window.meshcentral && window.meshcentral.currentDevice) {
-                resolve(window.meshcentral.currentDevice);
-                return;
-            }
-            
-            // Получаем ID из URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const deviceId = urlParams.get('id') || urlParams.get('nodeid');
-            
-            if (deviceId) {
-                fetch(`/api/device/${deviceId}`)
-                    .then(res => res.json())
-                    .then(data => resolve(data))
-                    .catch(() => resolve({ name: 'Unknown', state: 1 }));
-            } else {
-                resolve({ name: 'Unknown', state: 1 });
-            }
+            callback(node);
         });
     }
     
-    // Создание интерфейса на вкладке плагинов
-    function renderPluginTab(deviceData) {
-        const container = document.getElementById('exportpdf');
-        if (!container) return;
+    // Отрисовка вкладки плагина (как в ScriptTask)
+    function renderPluginTab(parent, nodeid, node) {
+        const tabId = pluginName;
         
-        // Очищаем контейнер
-        container.innerHTML = '';
+        // Проверяем, активна ли наша вкладка
+        if (!parent.tabIsActive(tabId)) return;
         
-        // Создаем кнопку экспорта
-        const exportBtn = document.createElement('button');
-        exportBtn.innerHTML = '📄 Экспортировать информацию об устройстве в PDF';
-        exportBtn.style.cssText = `
-            padding: 12px 24px;
-            background: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 20px;
-            transition: background 0.2s;
+        // Получаем актуальные данные устройства, если не переданы
+        if (!node && nodeid) {
+            getDeviceData(nodeid, (deviceData) => {
+                if (deviceData) {
+                    drawContent(parent, deviceData);
+                } else {
+                    drawError(parent);
+                }
+            });
+        } else if (node) {
+            drawContent(parent, node);
+        } else {
+            drawError(parent);
+        }
+    }
+    
+    // Отрисовка содержимого вкладки
+    function drawContent(parent, deviceData) {
+        const tabId = pluginName;
+        
+        // Генерируем HTML интерфейса вкладки
+        const html = `
+            <div style="padding: 20px;">
+                <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h2 style="color: #1a73e8; margin-bottom: 15px;">📄 Экспорт информации об устройстве</h2>
+                    <p>Нажмите на кнопку ниже, чтобы сохранить подробный отчет об устройстве "${escapeHtml(deviceData.name)}" в формате PDF.</p>
+                    <p style="margin-top: 10px; color: #5f6368; font-size: 13px;">Отчет будет содержать информацию об ОС, процессоре, памяти, сетевых интерфейсах и других характеристиках.</p>
+                </div>
+                <button id="exportpdf-export-btn" style="
+                    padding: 12px 24px;
+                    background: #1a73e8;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    transition: background 0.2s;
+                " onmouseenter="this.style.background='#1557b0'" onmouseleave="this.style.background='#1a73e8'">
+                    📄 Экспортировать в PDF
+                </button>
+            </div>
         `;
-        exportBtn.onmouseenter = () => exportBtn.style.background = '#1557b0';
-        exportBtn.onmouseleave = () => exportBtn.style.background = '#1a73e8';
-        exportBtn.onclick = () => {
-            const html = generateDeviceReportHTML(deviceData);
-            exportToPDF(html);
+        
+        // Вставляем HTML во вкладку
+        parent.tabContent(tabId, html);
+        
+        // Добавляем обработчик на кнопку (после того как DOM обновился)
+        setTimeout(() => {
+            const btn = document.getElementById('exportpdf-export-btn');
+            if (btn) {
+                btn.onclick = () => {
+                    const reportHtml = generateDeviceReportHTML(deviceData);
+                    exportToPDF(reportHtml);
+                };
+            }
+        }, 100);
+    }
+    
+    function drawError(parent) {
+        const tabId = pluginName;
+        const html = `
+            <div style="padding: 20px;">
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; color: #721c24;">
+                    <h3>❌ Ошибка</h3>
+                    <p>Не удалось получить данные об устройстве.</p>
+                </div>
+            </div>
+        `;
+        parent.tabContent(tabId, html);
+    }
+    
+    // Регистрируем вкладку плагина
+    function registerTab(parent) {
+        console.log('[exportpdf] Регистрация вкладки плагина');
+        return {
+            tabId: pluginName,
+            tabTitle: '📄 Export PDF'
         };
-        
-        // Создаем информационную карточку
-        const infoCard = document.createElement('div');
-        infoCard.style.cssText = `
-            margin: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e1e4e8;
-        `;
-        infoCard.innerHTML = `
-            <h3 style="margin-bottom: 15px; color: #1a73e8;">📄 Экспорт в PDF</h3>
-            <p>Нажмите на кнопку ниже, чтобы сохранить подробный отчет об устройстве в формате PDF.</p>
-            <p style="margin-top: 10px; color: #5f6368; font-size: 13px;">Отчет будет содержать информацию об ОС, процессоре, памяти, сетевых интерфейсах и других характеристиках.</p>
-        `;
-        
-        container.appendChild(infoCard);
-        container.appendChild(exportBtn);
     }
     
     // Плагин
-    const plugin = {
-        exportpdf: {
-            exports: ['exportCurrentDevice'],
-            
-            // Регистрируем новую вкладку на странице устройства
-            registerPluginTab: function(parent) {
-                console.log('[exportpdf] Регистрация вкладки плагина');
-                return {
-                    tabId: 'exportpdf',
-                    tabTitle: '📄 Export PDF'
-                };
-            },
-            
-            // Хук, который срабатывает при выборе устройства
-            onDeviceRefreshEnd: function(parent, dbid, node) {
-                console.log('[exportpdf] Устройство выбрано:', node ? node.name : 'unknown');
-                
-                // Если вкладка уже активна, обновляем ее содержимое
-                if (document.getElementById('exportpdf')) {
-                    getCurrentDeviceData().then(deviceData => {
-                        renderPluginTab(deviceData);
-                    });
+    const plugin = {};
+    
+    // Основной объект плагина с хуками (как в ScriptTask)
+    plugin[pluginName] = {
+        // Регистрация вкладки
+        registerPluginTab: registerTab,
+        
+        // Хук при выборе устройства
+        onDeviceRefreshEnd: function(parent, dbid, node) {
+            console.log('[exportpdf] onDeviceRefreshEnd вызван, device:', node ? node.name : 'unknown');
+            renderPluginTab(parent, dbid, node);
+        },
+        
+        // Хук при загрузке веб-интерфейса
+        onWebUIStartupEnd: function(parent) {
+            console.log('[exportpdf] onWebUIStartupEnd вызван');
+        },
+        
+        // Экспортируемые функции (если нужны)
+        exports: ['exportCurrentDevice'],
+        
+        exportCurrentDevice: function(parent, nodeid) {
+            getDeviceData(nodeid, (deviceData) => {
+                if (deviceData) {
+                    const reportHtml = generateDeviceReportHTML(deviceData);
+                    exportToPDF(reportHtml);
+                } else {
+                    alert('Не удалось получить данные об устройстве');
                 }
-            },
-            
-            // Хук при загрузке веб-интерфейса
-            onWebUIStartupEnd: function() {
-                console.log('[exportpdf] Веб-интерфейс загружен');
-                
-                // Наблюдаем за появлением вкладки
-                const observer = new MutationObserver(() => {
-                    const tabContainer = document.getElementById('exportpdf');
-                    if (tabContainer && tabContainer.innerHTML === '') {
-                        getCurrentDeviceData().then(deviceData => {
-                            renderPluginTab(deviceData);
-                        });
-                    }
-                });
-                
-                observer.observe(document.body, { childList: true, subtree: true });
-            },
-            
-            // Экспорт текущего устройства (вызывается из консоли)
-            exportCurrentDevice: function() {
-                getCurrentDeviceData().then(deviceData => {
-                    if (deviceData && deviceData.name) {
-                        const html = generateDeviceReportHTML(deviceData);
-                        exportToPDF(html);
-                    } else {
-                        alert('Не удалось получить данные об устройстве');
-                    }
-                });
-            }
+            });
         }
     };
     
