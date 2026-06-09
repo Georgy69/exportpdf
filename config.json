@@ -1,0 +1,17 @@
+{
+  "name": "Export PDF Test",
+  "shortName": "exportpdf",
+  "version": "1.0.0",
+  "author": "Georgy69",
+  "description": "Test plugin showing 'Тест' on plugins tab",
+  "hasAdminPanel": false,
+  "homepage": "https://github.com/Georgy69/exportpdf",
+  "changelogUrl": "https://raw.githubusercontent.com/Georgy69/exportpdf/master/changelog.md",
+  "configUrl": "https://raw.githubusercontent.com/Georgy69/exportpdf/master/config.json",
+  "downloadUrl": "https://github.com/Georgy69/exportpdf/archive/master.zip",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Georgy69/exportpdf.git"
+  },
+  "meshCentralCompat": ">=0.4.3"
+}
