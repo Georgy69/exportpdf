@@ -1,12 +1,9 @@
 'use strict';
 
 module.exports = function (parent) {
-    let myparent = parent;
-    const pluginName = 'exportpdf'; // Должно совпадать с shortName в config.json
+    console.log('[exportpdf] Плагин экспорта в PDF загружен');
     
-    console.log('[exportpdf] Плагин экспорта в PDF загружен (по образу ScriptTask)');
-    
-    // Функция генерации HTML отчета (та же, что и раньше)
+    // Функция генерации HTML отчета (полная версия)
     function generateDeviceReportHTML(node) {
         const now = new Date();
         const isOnline = (node.state === 1 || node.conn === 1);
@@ -44,25 +41,24 @@ module.exports = function (parent) {
     <title>Отчет об устройстве - ${escapeHtml(node.name)}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; padding: 20px; background: #f0f2f5; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background: #f0f2f5; }
         .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .header { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: white; padding: 30px; text-align: center; }
         .header h1 { font-size: 28px; margin-bottom: 10px; }
         .content { padding: 30px; }
-        .section { margin-bottom: 30px; break-inside: avoid; page-break-inside: avoid; }
+        .section { margin-bottom: 30px; break-inside: avoid; }
         .section-title { font-size: 20px; color: #1a73e8; border-bottom: 3px solid #1a73e8; padding-bottom: 8px; margin-bottom: 20px; }
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
-        .info-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 20px; break-inside: avoid; page-break-inside: avoid; }
-        .info-card h3 { color: #1a73e8; font-size: 16px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e1e4e8; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .info-card { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 20px; break-inside: avoid; }
+        .info-card h3 { color: #1a73e8; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e1e4e8; }
         .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
-        .info-label { font-weight: 600; color: #5f6368; font-size: 13px; }
-        .info-value { color: #202124; font-size: 13px; text-align: right; word-break: break-word; max-width: 60%; }
+        .info-label { font-weight: 600; color: #5f6368; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; background: ${statusColor}; color: white; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 13px; }
-        th { background: #e9ecef; font-weight: 600; color: #5f6368; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; }
+        th { background: #e9ecef; }
         .footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 11px; color: #5f6368; border-top: 1px solid #e1e4e8; }
-        @media print { body { background: white; padding: 0; } .info-card { break-inside: avoid; } }
+        @media print { body { background: white; } .info-card { break-inside: avoid; } }
     </style>
 </head>
 <body>
@@ -77,51 +73,47 @@ module.exports = function (parent) {
                 <div class="info-grid">
                     <div class="info-card">
                         <h3>Общие сведения</h3>
-                        <div class="info-row"><span class="info-label">Имя устройства:</span><span class="info-value">${escapeHtml(node.name)}</span></div>
-                        <div class="info-row"><span class="info-label">Статус:</span><span class="info-value"><span class="status-badge">${isOnline ? 'Онлайн' : 'Оффлайн'}</span></span></div>
-                        <div class="info-row"><span class="info-label">Тип устройства:</span><span class="info-value">${osType}</span></div>
-                        <div class="info-row"><span class="info-label">ID устройства:</span><span class="info-value">${escapeHtml(node._id || node.id || 'Н/Д')}</span></div>
+                        <div class="info-row"><span class="info-label">Имя:</span><span>${escapeHtml(node.name)}</span></div>
+                        <div class="info-row"><span class="info-label">Статус:</span><span class="status-badge">${isOnline ? 'Онлайн' : 'Оффлайн'}</span></div>
+                        <div class="info-row"><span class="info-label">Тип:</span><span>${osType}</span></div>
                     </div>
                     <div class="info-card">
-                        <h3>Агент MeshCentral</h3>
-                        <div class="info-row"><span class="info-label">Версия агента:</span><span class="info-value">${escapeHtml(node.agentVersion || node.version || 'Н/Д')}</span></div>
-                        <div class="info-row"><span class="info-label">Последнее подключение:</span><span class="info-value">${formatDate(node.lastConnectTime)}</span></div>
-                        <div class="info-row"><span class="info-label">Последний IP:</span><span class="info-value">${escapeHtml(node.lastIP || node.ipaddr || 'Н/Д')}</span></div>
+                        <h3>Агент</h3>
+                        <div class="info-row"><span class="info-label">Версия:</span><span>${escapeHtml(node.agentVersion || node.version || 'Н/Д')}</span></div>
+                        <div class="info-row"><span class="info-label">Последнее подключение:</span><span>${formatDate(node.lastConnectTime)}</span></div>
                     </div>
                 </div>
             </div>
-            
             <div class="section">
                 <h2 class="section-title">💿 Операционная система</h2>
                 <div class="info-card">
-                    <div class="info-row"><span class="info-label">ОС:</span><span class="info-value">${escapeHtml(node.os || node.osdesc || 'Н/Д')}</span></div>
-                    <div class="info-row"><span class="info-label">Версия:</span><span class="info-value">${escapeHtml(node.osver || 'Н/Д')}</span></div>
-                    <div class="info-row"><span class="info-label">Архитектура:</span><span class="info-value">${escapeHtml(node.arch || 'Н/Д')}</span></div>
+                    <div class="info-row"><span class="info-label">ОС:</span><span>${escapeHtml(node.os || node.osdesc || 'Н/Д')}</span></div>
+                    <div class="info-row"><span class="info-label">Версия:</span><span>${escapeHtml(node.osver || 'Н/Д')}</span></div>
+                    <div class="info-row"><span class="info-label">Архитектура:</span><span>${escapeHtml(node.arch || 'Н/Д')}</span></div>
                 </div>
             </div>
-            
             <div class="section">
                 <h2 class="section-title">🖥️ Аппаратное обеспечение</h2>
                 <div class="info-grid">
                     <div class="info-card">
                         <h3>Процессор и память</h3>
-                        <div class="info-row"><span class="info-label">Процессор:</span><span class="info-value">${escapeHtml(node.cpu || (node.hardware && node.hardware.cpu) || 'Н/Д')}</span></div>
-                        <div class="info-row"><span class="info-label">ОЗУ:</span><span class="info-value">${formatBytes(node.ram || (node.hardware && node.hardware.ram))}</span></div>
+                        <div class="info-row"><span class="info-label">Процессор:</span><span>${escapeHtml(node.cpu || (node.hardware && node.hardware.cpu) || 'Н/Д')}</span></div>
+                        <div class="info-row"><span class="info-label">ОЗУ:</span><span>${formatBytes(node.ram || (node.hardware && node.hardware.ram))}</span></div>
                     </div>
+                    ${node.biosvendor ? `
                     <div class="info-card">
                         <h3>BIOS</h3>
-                        <div class="info-row"><span class="info-label">Вендор:</span><span class="info-value">${escapeHtml(node.biosvendor || 'Н/Д')}</span></div>
-                        <div class="info-row"><span class="info-label">Версия:</span><span class="info-value">${escapeHtml(node.biosversion || 'Н/Д')}</span></div>
-                        <div class="info-row"><span class="info-label">Серийный номер:</span><span class="info-value">${escapeHtml(node.serial || 'Н/Д')}</span></div>
+                        <div class="info-row"><span class="info-label">Вендор:</span><span>${escapeHtml(node.biosvendor)}</span></div>
+                        <div class="info-row"><span class="info-label">Версия:</span><span>${escapeHtml(node.biosversion || 'Н/Д')}</span></div>
                     </div>
+                    ` : ''}
                 </div>
             </div>
-            
             ${node.netif && node.netif.length ? `
             <div class="section">
-                <h2 class="section-title">🌐 Сетевые интерфейсы</h2>
+                <h2 class="section-title">🌐 Сеть</h2>
                 <div class="info-card">
-                    <table><thead><tr><th>Интерфейс</th><th>IP адрес</th><th>MAC адрес</th></tr></thead>
+                    <table><thead><tr><th>Интерфейс</th><th>IP</th><th>MAC</th></tr></thead>
                     <tbody>
                         ${node.netif.map(net => `<tr><td>${escapeHtml(net.name)}</td><td>${escapeHtml(net.ip4Address || net.ip4 || net.ip || 'Н/Д')}</td><td>${escapeHtml(net.mac || 'Н/Д')}</td></tr>`).join('')}
                     </tbody>
@@ -131,7 +123,7 @@ module.exports = function (parent) {
             ` : ''}
         </div>
         <div class="footer">
-            <p>Отчет сгенерирован через MeshCentral | ${now.toLocaleString('ru-RU')}</p>
+            <p>MeshCentral | ${now.toLocaleString('ru-RU')}</p>
         </div>
     </div>
 </body>
@@ -152,139 +144,107 @@ module.exports = function (parent) {
         setTimeout(() => printWindow.close(), 1000);
     }
     
-    // Функция для получения данных об устройстве с сервера
-    function getDeviceData(nodeid, callback) {
-        const server = myparent.GetServer();
-        const db = server.GetDB();
-        
-        db.GetNodeById(nodeid, (err, node) => {
-            if (err || !node) {
-                console.error('[exportpdf] Ошибка получения данных устройства:', err);
-                callback(null);
-                return;
-            }
-            callback(node);
-        });
-    }
-    
-    // Отрисовка вкладки плагина (как в ScriptTask)
-    function renderPluginTab(parent, nodeid, node) {
-        const tabId = pluginName;
-        
-        // Проверяем, активна ли наша вкладка
-        if (!parent.tabIsActive(tabId)) return;
-        
-        // Получаем актуальные данные устройства, если не переданы
-        if (!node && nodeid) {
-            getDeviceData(nodeid, (deviceData) => {
-                if (deviceData) {
-                    drawContent(parent, deviceData);
-                } else {
-                    drawError(parent);
-                }
-            });
-        } else if (node) {
-            drawContent(parent, node);
-        } else {
-            drawError(parent);
+    // Функция для добавления блока на вкладку "Плагины"
+    function addToPluginsTab(node) {
+        // Ищем контейнер вкладки "Плагины"
+        const pluginsTab = document.getElementById('pluginsTab');
+        if (!pluginsTab) {
+            console.log('[exportpdf] Вкладка "Плагины" не найдена');
+            return;
         }
-    }
-    
-    // Отрисовка содержимого вкладки
-    function drawContent(parent, deviceData) {
-        const tabId = pluginName;
         
-        // Генерируем HTML интерфейса вкладки
-        const html = `
-            <div style="padding: 20px;">
-                <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                    <h2 style="color: #1a73e8; margin-bottom: 15px;">📄 Экспорт информации об устройстве</h2>
-                    <p>Нажмите на кнопку ниже, чтобы сохранить подробный отчет об устройстве "${escapeHtml(deviceData.name)}" в формате PDF.</p>
-                    <p style="margin-top: 10px; color: #5f6368; font-size: 13px;">Отчет будет содержать информацию об ОС, процессоре, памяти, сетевых интерфейсах и других характеристиках.</p>
+        // Ищем контейнер, где ScriptTask отображает свой интерфейс
+        // или создаем свой блок в начале вкладки
+        let container = document.querySelector('#pluginsTab .exportpdf-container');
+        
+        if (!container) {
+            // Создаем блок для плагина
+            container = document.createElement('div');
+            container.className = 'exportpdf-container';
+            container.style.cssText = 'margin: 15px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #ddd;';
+            
+            // Вставляем в начало вкладки "Плагины"
+            if (pluginsTab.firstChild) {
+                pluginsTab.insertBefore(container, pluginsTab.firstChild);
+            } else {
+                pluginsTab.appendChild(container);
+            }
+        }
+        
+        // Отрисовываем интерфейс
+        container.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="margin: 0 0 5px 0; color: #1a73e8;">📄 Экспорт в PDF</h3>
+                    <p style="margin: 0; color: #5f6368; font-size: 13px;">Сохраните информацию об устройстве "${escapeHtml(node.name)}" в PDF</p>
                 </div>
-                <button id="exportpdf-export-btn" style="
-                    padding: 12px 24px;
+                <button id="exportpdf-btn" style="
+                    padding: 8px 16px;
                     background: #1a73e8;
                     color: white;
                     border: none;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     cursor: pointer;
-                    font-size: 16px;
-                    transition: background 0.2s;
-                " onmouseenter="this.style.background='#1557b0'" onmouseleave="this.style.background='#1a73e8'">
-                    📄 Экспортировать в PDF
+                    font-size: 14px;
+                ">
+                    📄 Экспортировать
                 </button>
             </div>
         `;
         
-        // Вставляем HTML во вкладку
-        parent.tabContent(tabId, html);
+        // Добавляем обработчик
+        const btn = document.getElementById('exportpdf-btn');
+        if (btn) {
+            btn.onclick = () => {
+                const html = generateDeviceReportHTML(node);
+                exportToPDF(html);
+            };
+        }
         
-        // Добавляем обработчик на кнопку (после того как DOM обновился)
-        setTimeout(() => {
-            const btn = document.getElementById('exportpdf-export-btn');
-            if (btn) {
-                btn.onclick = () => {
-                    const reportHtml = generateDeviceReportHTML(deviceData);
-                    exportToPDF(reportHtml);
-                };
-            }
-        }, 100);
+        console.log('[exportpdf] Блок добавлен на вкладку "Плагины"');
     }
     
-    function drawError(parent) {
-        const tabId = pluginName;
-        const html = `
-            <div style="padding: 20px;">
-                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; color: #721c24;">
-                    <h3>❌ Ошибка</h3>
-                    <p>Не удалось получить данные об устройстве.</p>
-                </div>
-            </div>
-        `;
-        parent.tabContent(tabId, html);
-    }
-    
-    // Регистрируем вкладку плагина
-    function registerTab(parent) {
-        console.log('[exportpdf] Регистрация вкладки плагина');
-        return {
-            tabId: pluginName,
-            tabTitle: '📄 Export PDF'
-        };
+    // Получение данных устройства (через API при необходимости)
+    function enrichDeviceData(node, callback) {
+        // Если данных достаточно, возвращаем как есть
+        if (node.cpu && node.netif) {
+            callback(node);
+            return;
+        }
+        
+        // Пробуем получить расширенные данные через API
+        const nodeId = node._id || node.id;
+        if (nodeId) {
+            fetch(`/api/device/${nodeId}`)
+                .then(res => res.json())
+                .then(fullData => callback(fullData))
+                .catch(() => callback(node));
+        } else {
+            callback(node);
+        }
     }
     
     // Плагин
-    const plugin = {};
-    
-    // Основной объект плагина с хуками (как в ScriptTask)
-    plugin[pluginName] = {
-        // Регистрация вкладки
-        registerPluginTab: registerTab,
-        
-        // Хук при выборе устройства
-        onDeviceRefreshEnd: function(parent, dbid, node) {
-            console.log('[exportpdf] onDeviceRefreshEnd вызван, device:', node ? node.name : 'unknown');
-            renderPluginTab(parent, dbid, node);
-        },
-        
-        // Хук при загрузке веб-интерфейса
-        onWebUIStartupEnd: function(parent) {
-            console.log('[exportpdf] onWebUIStartupEnd вызван');
-        },
-        
-        // Экспортируемые функции (если нужны)
-        exports: ['exportCurrentDevice'],
-        
-        exportCurrentDevice: function(parent, nodeid) {
-            getDeviceData(nodeid, (deviceData) => {
-                if (deviceData) {
-                    const reportHtml = generateDeviceReportHTML(deviceData);
-                    exportToPDF(reportHtml);
-                } else {
-                    alert('Не удалось получить данные об устройстве');
+    const plugin = {
+        exportpdf: {
+            // Хук при выборе устройства
+            onDeviceRefreshEnd: function(parent, dbid, node) {
+                console.log('[exportpdf] Устройство выбрано:', node ? node.name : 'unknown');
+                
+                if (node) {
+                    // Обогащаем данные и добавляем блок на вкладку "Плагины"
+                    enrichDeviceData(node, (enrichedNode) => {
+                        setTimeout(() => {
+                            addToPluginsTab(enrichedNode);
+                        }, 500); // Небольшая задержка для загрузки вкладки
+                    });
                 }
-            });
+            },
+            
+            // Хук при загрузке веб-интерфейса
+            onWebUIStartupEnd: function() {
+                console.log('[exportpdf] Веб-интерфейс загружен');
+            }
         }
     };
     
