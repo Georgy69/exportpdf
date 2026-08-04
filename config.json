@@ -1,7 +1,7 @@
 {
   "name": "Device PDF Exporter",
   "shortName": "pdfexport",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Georgy69",
   "description": "Экспорт основной информации об устройстве в PDF документ.",
   "hasAdminPanel": false,
