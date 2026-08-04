@@ -11,30 +11,34 @@ module.exports.pdfexport = function (parent) {
     var obj = {};
     obj.parent = parent;
     
-    // Регистрируем вызовы плагина
+    // Перечисляем доступные методы
     obj.exports = [
         "onBuildPluginTab",
         "exportDeviceToPDF"
     ];
 
-    // Регистрируем вкладку устройства в интерфейсе MeshCentral
-    if (typeof pluginHandler !== 'undefined' && pluginHandler.registerPluginTab) {
-        pluginHandler.registerPluginTab({
-            tabId: 'pdfexport',
-            tabTitle: 'PDF Export'
-        });
-    }
-
     /**
-     * Отрисовка содержимого на вкладке плагина
+     * Отрисовка вкладки и регистрация в интерфейсе MeshCentral
      */
     obj.onBuildPluginTab = function(pluginIndex, node, container) {
+        // Динамически добавляем вкладку в верхнее меню подвкладок (p19headers), если ее там еще нет
+        if (typeof pluginHandler !== 'undefined' && pluginHandler.registerPluginTab) {
+            try {
+                pluginHandler.registerPluginTab({
+                    tabId: 'pdfexport',
+                    tabTitle: 'PDF Export'
+                });
+            } catch (e) {
+                console.log('PDFExport: registerPluginTab error or already registered', e);
+            }
+        }
+
         if (!container) return;
         
-        // Очищаем контейнер перед отрисовкой
+        // Очищаем контейнер вкладки перед рендерингом
         container.innerHTML = '';
 
-        // Создаем карточку интерфейса
+        // Создаем форму с кнопкой
         var card = document.createElement('div');
         card.style.padding = '20px';
         card.style.backgroundColor = '#ffffff';
@@ -51,7 +55,7 @@ module.exports.pdfexport = function (parent) {
 
         var desc = document.createElement('p');
         desc.style.color = '#555';
-        desc.innerText = 'Сгенерируйте и скачайте сводный PDF-отчет с системными параметрами устройства (' + (node ? node.name : 'N/A') + ').';
+        desc.innerText = 'Сгенерируйте и скачайте сводный PDF-отчет для устройства (' + (node ? node.name : 'N/A') + ').';
         card.appendChild(desc);
 
         var btn = document.createElement('button');
@@ -70,17 +74,16 @@ module.exports.pdfexport = function (parent) {
     };
 
     /**
-     * Генерация и сохранение PDF
+     * Логика генерации PDF-файла
      */
     obj.exportDeviceToPDF = function(deviceObj) {
         var dev = deviceObj || (typeof currentNode !== 'undefined' ? currentNode : null);
         
         if (!dev) {
-            alert("Ошибка: Устройство не выбрано или данные недоступны.");
+            alert("Ошибка: Устройство не выбрано.");
             return;
         }
 
-        // Подгружаем библиотеку jsPDF, если она еще не загружена
         if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -97,7 +100,6 @@ module.exports.pdfexport = function (parent) {
         var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
         var doc = new jsPDF();
 
-        // Шапка PDF
         doc.setFillColor(31, 78, 121);
         doc.rect(0, 0, 210, 25, 'F');
         
@@ -106,7 +108,6 @@ module.exports.pdfexport = function (parent) {
         doc.setFontSize(16);
         doc.text("MeshCentral - Device Report", 14, 16);
 
-        // Поля с данными
         doc.setTextColor(40, 40, 40);
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
