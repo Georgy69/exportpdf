@@ -122,5 +122,3 @@ module.exports.pdfexport = function (parent) {
 
     return obj;
 };
-// ❌ НИКАКОГО КОДА ПОСЛЕ ЗАКРЫВАЮЩЕЙ СКОБКИ module.exports!
-// Удалите всё, что было ниже этой строки в старом файле.
