@@ -1,9 +1,9 @@
 {
-  "name": "Device PDF Exporter",
-  "shortName": "pdfexport",
-  "version": "1.0.3",
+  "name": "Test Tab Plugin",
+  "shortName": "testtab",
+  "version": "0.0.1",
   "author": "Georgy69",
-  "description": "Экспорт основной информации об устройстве в PDF документ.",
+  "description": "Тестовый плагин для проверки регистрации вкладок.",
   "hasAdminPanel": false,
   "homepage": "https://github.com/Georgy69/exportpdf",
   "changelogUrl": "https://raw.githubusercontent.com/Georgy69/exportpdf/main/changelog.md",
