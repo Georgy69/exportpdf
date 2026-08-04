@@ -112,4 +112,3 @@ module.exports.pdfexport = function (parent) {
 
     return obj;
 };
-// ❌ НИКАКОГО ГЛОБАЛЬНОГО КОДА ПОСЛЕ module.exports!
