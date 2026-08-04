@@ -6,7 +6,7 @@
 */
 
 "use strict";
-
+console.log('PDFEXPORT PLUGIN LOADED');
 module.exports.pdfexport = function (parent) {
     var obj = {};
     obj.parent = parent;
