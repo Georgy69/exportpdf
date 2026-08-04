@@ -2,7 +2,7 @@
 @description MeshCentral Device PDF Exporter Plugin
 @author Georgy69
 @license Apache-2.0
-@version v1.0.2
+@version v1.0.3
 */
 "use strict";
 
@@ -10,26 +10,26 @@ module.exports.pdfexport = function (parent) {
     var obj = {};
     obj.parent = parent;
 
-    // ✅ ОБЯЗАТЕЛЬНО: Экспортируем registerPluginTab
+    // ✅ Экспортируем onDeviceRefreshEnd (как в FileDistribution)
     obj.exports = [
-        "registerPluginTab",
+        "onDeviceRefreshEnd",
         "onBuildPluginTab",
         "exportDeviceToPDF"
     ];
 
-    // ✅ РЕГИСТРАЦИЯ ВКЛАДКИ (Вызывается MeshCentral автоматически)
-    obj.registerPluginTab = function() {
-        return {
-            tabTitle: "PDF Export",
-            tabId: "pluginPdfExport"
-        };
+    // ✅ РЕГИСТРАЦИЯ ВКЛАДКИ при каждом открытии устройства (Способ B)
+    obj.onDeviceRefreshEnd = function() {
+        pluginHandler.registerPluginTab({
+            tabTitle: 'PDF Export',
+            tabId: 'pluginPdfExport'
+        });
     };
 
     // Отрисовка содержимого вкладки
     obj.onBuildPluginTab = function(pluginIndex, node, container) {
         if (!container) return;
         container.innerHTML = '';
-        
+
         var card = document.createElement('div');
         card.style.padding = '20px';
         card.style.backgroundColor = '#ffffff';
@@ -66,10 +66,7 @@ module.exports.pdfexport = function (parent) {
     // Логика генерации PDF
     obj.exportDeviceToPDF = function(deviceObj) {
         var dev = deviceObj || (typeof currentNode !== 'undefined' ? currentNode : null);
-        if (!dev) {
-            alert("Ошибка: Устройство не выбрано.");
-            return;
-        }
+        if (!dev) { alert("Ошибка: Устройство не выбрано."); return; }
         if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -98,27 +95,21 @@ module.exports.pdfexport = function (parent) {
         doc.line(14, 40, 196, 40);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        var startY = 48;
-        var lineHeight = 7;
-        var details = [
-            ["Device Name:", dev.name || "N/A"],
-            ["Node ID:", dev._id || "N/A"],
-            ["Hostname:", dev.hostname || "N/A"],
-            ["OS:", dev.osdesc || "N/A"],
-            ["IP Address:", dev.ip || "N/A"],
-            ["Status:", (dev.conn & 1) ? "Online" : "Offline"],
-            ["Report Generated:", new Date().toLocaleString()]
-        ];
-        details.forEach(function(item) {
+        var startY = 48, lineHeight = 7;
+        [["Device Name:", dev.name], ["Node ID:", dev._id], ["Hostname:", dev.hostname],
+         ["OS:", dev.osdesc], ["IP Address:", dev.ip],
+         ["Status:", (dev.conn & 1) ? "Online" : "Offline"],
+         ["Report Generated:", new Date().toLocaleString()]
+        ].forEach(function(item) {
             doc.setFont("helvetica", "bold");
-            doc.text(item[0], 14, startY);
+            doc.text(item[0] || "", 14, startY);
             doc.setFont("helvetica", "normal");
-            doc.text(String(item[1]), 65, startY);
+            doc.text(String(item[1] || "N/A"), 65, startY);
             startY += lineHeight;
         });
-        var fileName = (dev.name || "device").replace(/[^a-z0-9]/gi, '_').toLowerCase() + "_report.pdf";
-        doc.save(fileName);
+        doc.save((dev.name || "device").replace(/[^a-z0-9]/gi, '_').toLowerCase() + "_report.pdf");
     };
 
     return obj;
 };
+// ❌ НИКАКОГО ГЛОБАЛЬНОГО КОДА ПОСЛЕ module.exports!
