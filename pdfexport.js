@@ -2,7 +2,7 @@
 @description MeshCentral Device PDF Exporter Plugin
 @author Georgy69
 @license Apache-2.0
-@version v1.0.1
+@version v1.0.2
 */
 "use strict";
 
@@ -10,15 +10,14 @@ module.exports.pdfexport = function (parent) {
     var obj = {};
     obj.parent = parent;
 
-    // 1. Экспортируем методы для MeshCentral
+    // ✅ ОБЯЗАТЕЛЬНО: Экспортируем registerPluginTab
     obj.exports = [
         "registerPluginTab",
         "onBuildPluginTab",
         "exportDeviceToPDF"
     ];
 
-    // 2. РЕГИСТРАЦИЯ ВКЛАДКИ (Как в EventLog)
-    // Эта функция вызывается сервером/клиентом автоматически
+    // ✅ РЕГИСТРАЦИЯ ВКЛАДКИ (Вызывается MeshCentral автоматически)
     obj.registerPluginTab = function() {
         return {
             tabTitle: "PDF Export",
@@ -26,8 +25,7 @@ module.exports.pdfexport = function (parent) {
         };
     };
 
-    // 3. Отрисовка содержимого вкладки
-    // Вызывается когда пользователь кликает на вкладку
+    // Отрисовка содержимого вкладки
     obj.onBuildPluginTab = function(pluginIndex, node, container) {
         if (!container) return;
         container.innerHTML = '';
@@ -65,7 +63,7 @@ module.exports.pdfexport = function (parent) {
         container.appendChild(card);
     };
 
-    // 4. Логика генерации PDF (без изменений)
+    // Логика генерации PDF
     obj.exportDeviceToPDF = function(deviceObj) {
         var dev = deviceObj || (typeof currentNode !== 'undefined' ? currentNode : null);
         if (!dev) {
@@ -76,7 +74,7 @@ module.exports.pdfexport = function (parent) {
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
             script.onload = function() { obj.generatePDF(dev); };
-            script.onerror = function() { alert("Ошибка загрузки библиотеки jsPDF. Проверьте интернет."); };
+            script.onerror = function() { alert("Ошибка загрузки jsPDF"); };
             document.head.appendChild(script);
         } else {
             obj.generatePDF(dev);
@@ -124,5 +122,5 @@ module.exports.pdfexport = function (parent) {
 
     return obj;
 };
-// ⚠️ ВАЖНО: Удалите весь код после этой строки! 
-// Никаких pluginHandler.registerPluginTab внизу файла быть не должно.
+// ❌ НИКАКОГО КОДА ПОСЛЕ ЗАКРЫВАЮЩЕЙ СКОБКИ module.exports!
+// Удалите всё, что было ниже этой строки в старом файле.
