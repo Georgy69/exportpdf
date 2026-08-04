@@ -5,11 +5,11 @@
   "author": "Georgy69",
   "description": "Export device system information (OS, RAM, Disk, CPU) to PDF.",
   "hasAdminPanel": false,
-  "homepage": "https://github.com/Georgy69/MeshCentral-DeviceInfoPDF",
-  "downloadUrl": "https://github.com/Georgy69/MeshCentral-DeviceInfoPDF/archive/master.zip",
+  "homepage": "https://github.com/Georgy69/exportpdf",
+  "downloadUrl": "https://github.com/Georgy69/exportpdf/archive/master.zip",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Georgy69/MeshCentral-DeviceInfoPDF.git"
+    "url": "https://github.com/Georgy69/exportpdf.git"
   },
   "meshCentralCompat": ">=1.1.0"
 }
