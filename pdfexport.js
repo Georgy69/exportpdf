@@ -11,34 +11,18 @@ module.exports.pdfexport = function (parent) {
     var obj = {};
     obj.parent = parent;
     
-    // Перечисляем доступные методы
+    // 1. Экспортируем методы для MeshCentral
     obj.exports = [
         "onBuildPluginTab",
         "exportDeviceToPDF"
     ];
 
-    /**
-     * Отрисовка вкладки и регистрация в интерфейсе MeshCentral
-     */
+    // 2. Функция ручной отрисовки интерфейса во вкладке
     obj.onBuildPluginTab = function(pluginIndex, node, container) {
-        // Динамически добавляем вкладку в верхнее меню подвкладок (p19headers), если ее там еще нет
-        if (typeof pluginHandler !== 'undefined' && pluginHandler.registerPluginTab) {
-            try {
-                pluginHandler.registerPluginTab({
-                    tabId: 'pdfexport',
-                    tabTitle: 'PDF Export'
-                });
-            } catch (e) {
-                console.log('PDFExport: registerPluginTab error or already registered', e);
-            }
-        }
-
         if (!container) return;
         
-        // Очищаем контейнер вкладки перед рендерингом
         container.innerHTML = '';
 
-        // Создаем форму с кнопкой
         var card = document.createElement('div');
         card.style.padding = '20px';
         card.style.backgroundColor = '#ffffff';
@@ -73,9 +57,7 @@ module.exports.pdfexport = function (parent) {
         container.appendChild(card);
     };
 
-    /**
-     * Логика генерации PDF-файла
-     */
+    // 3. Логика генерации PDF
     obj.exportDeviceToPDF = function(deviceObj) {
         var dev = deviceObj || (typeof currentNode !== 'undefined' ? currentNode : null);
         
@@ -146,3 +128,11 @@ module.exports.pdfexport = function (parent) {
 
     return obj;
 };
+
+// Регистрация вкладки во фронтенде MeshCentral при загрузке скрипта
+if (typeof pluginHandler !== 'undefined') {
+    pluginHandler.registerPluginTab({
+        tabId: 'pdfexport',
+        tabTitle: 'PDF Export'
+    });
+}
