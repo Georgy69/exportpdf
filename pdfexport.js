@@ -129,10 +129,3 @@ module.exports.pdfexport = function (parent) {
     return obj;
 };
 
-// Регистрация вкладки во фронтенде MeshCentral при загрузке скрипта
-if (typeof pluginHandler !== 'undefined') {
-    pluginHandler.registerPluginTab({
-        tabId: 'pdfexport',
-        tabTitle: 'PDF Export'
-    });
-}
