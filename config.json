@@ -14,5 +14,10 @@
     "url": "https://github.com/Georgy69/exportpdf.git"
   },
   "versionHistoryUrl": "https://api.github.com/repos/Georgy69/exportpdf/tags",
-  "meshCentralCompat": ">=0.4.4-s"
+  "meshCentralCompat": ">=0.4.4-s",
+  "domains": {
+    "*": {
+      "onBuildPluginTab": true
+    }
+  }
 }
