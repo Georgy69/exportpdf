@@ -1,28 +1,37 @@
-/** 
-* @description MeshCentral Device PDF Exporter Plugin
-* @author Georgy69
-* @license Apache-2.0
-* @version v1.0.0
+/**
+@description MeshCentral Device PDF Exporter Plugin
+@author Georgy69
+@license Apache-2.0
+@version v1.0.1
 */
-
 "use strict";
-console.log('PDFEXPORT PLUGIN LOADED');
+
 module.exports.pdfexport = function (parent) {
     var obj = {};
     obj.parent = parent;
-    
+
     // 1. Экспортируем методы для MeshCentral
     obj.exports = [
+        "registerPluginTab",
         "onBuildPluginTab",
         "exportDeviceToPDF"
     ];
 
-    // 2. Функция ручной отрисовки интерфейса во вкладке
+    // 2. РЕГИСТРАЦИЯ ВКЛАДКИ (Как в EventLog)
+    // Эта функция вызывается сервером/клиентом автоматически
+    obj.registerPluginTab = function() {
+        return {
+            tabTitle: "PDF Export",
+            tabId: "pluginPdfExport"
+        };
+    };
+
+    // 3. Отрисовка содержимого вкладки
+    // Вызывается когда пользователь кликает на вкладку
     obj.onBuildPluginTab = function(pluginIndex, node, container) {
         if (!container) return;
-        
         container.innerHTML = '';
-
+        
         var card = document.createElement('div');
         card.style.padding = '20px';
         card.style.backgroundColor = '#ffffff';
@@ -48,30 +57,26 @@ module.exports.pdfexport = function (parent) {
         btn.style.fontSize = '14px';
         btn.style.cursor = 'pointer';
         btn.innerText = 'Скачать PDF отчет';
-        
         btn.onclick = function() {
             obj.exportDeviceToPDF(node || (typeof currentNode !== 'undefined' ? currentNode : null));
         };
-
         card.appendChild(btn);
+
         container.appendChild(card);
     };
 
-    // 3. Логика генерации PDF
+    // 4. Логика генерации PDF (без изменений)
     obj.exportDeviceToPDF = function(deviceObj) {
         var dev = deviceObj || (typeof currentNode !== 'undefined' ? currentNode : null);
-        
         if (!dev) {
             alert("Ошибка: Устройство не выбрано.");
             return;
         }
-
         if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script.onload = function() {
-                obj.generatePDF(dev);
-            };
+            script.onload = function() { obj.generatePDF(dev); };
+            script.onerror = function() { alert("Ошибка загрузки библиотеки jsPDF. Проверьте интернет."); };
             document.head.appendChild(script);
         } else {
             obj.generatePDF(dev);
@@ -81,29 +86,22 @@ module.exports.pdfexport = function (parent) {
     obj.generatePDF = function(dev) {
         var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
         var doc = new jsPDF();
-
         doc.setFillColor(31, 78, 121);
         doc.rect(0, 0, 210, 25, 'F');
-        
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         doc.text("MeshCentral - Device Report", 14, 16);
-
         doc.setTextColor(40, 40, 40);
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
         doc.text("System Information", 14, 38);
-
         doc.setDrawColor(200, 200, 200);
         doc.line(14, 40, 196, 40);
-
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        
         var startY = 48;
         var lineHeight = 7;
-
         var details = [
             ["Device Name:", dev.name || "N/A"],
             ["Node ID:", dev._id || "N/A"],
@@ -113,7 +111,6 @@ module.exports.pdfexport = function (parent) {
             ["Status:", (dev.conn & 1) ? "Online" : "Offline"],
             ["Report Generated:", new Date().toLocaleString()]
         ];
-
         details.forEach(function(item) {
             doc.setFont("helvetica", "bold");
             doc.text(item[0], 14, startY);
@@ -121,11 +118,11 @@ module.exports.pdfexport = function (parent) {
             doc.text(String(item[1]), 65, startY);
             startY += lineHeight;
         });
-
         var fileName = (dev.name || "device").replace(/[^a-z0-9]/gi, '_').toLowerCase() + "_report.pdf";
         doc.save(fileName);
     };
 
     return obj;
 };
-
+// ⚠️ ВАЖНО: Удалите весь код после этой строки! 
+// Никаких pluginHandler.registerPluginTab внизу файла быть не должно.
