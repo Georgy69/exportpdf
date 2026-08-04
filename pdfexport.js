@@ -1,113 +1,27 @@
-/**
-@description MeshCentral Device PDF Exporter Plugin
-@author Georgy69
-@license Apache-2.0
-@version v1.0.3
-*/
 "use strict";
 
-module.exports.pdfexport = function (parent) {
+module.exports.testtab = function (parent) {
     var obj = {};
     obj.parent = parent;
 
-    // ✅ Экспортируем onDeviceRefreshEnd (как в FileDistribution)
+    // Экспортируем только то, что нужно для теста
     obj.exports = [
         "onDeviceRefreshEnd",
-        "onBuildPluginTab",
-        "exportDeviceToPDF"
+        "onBuildPluginTab"
     ];
 
-    // ✅ РЕГИСТРАЦИЯ ВКЛАДКИ при каждом открытии устройства (Способ B)
+    // РЕГИСТРАЦИЯ ВКЛАДКИ (Способ B как в FileDistribution)
     obj.onDeviceRefreshEnd = function() {
         pluginHandler.registerPluginTab({
-            tabTitle: 'PDF Export',
-            tabId: 'pluginPdfExport'
+            tabTitle: '🧪 Тест',
+            tabId: 'pluginTestTab'
         });
     };
 
-    // Отрисовка содержимого вкладки
+    // ОТРИСОВКА СОДЕРЖИМОГО
     obj.onBuildPluginTab = function(pluginIndex, node, container) {
         if (!container) return;
-        container.innerHTML = '';
-
-        var card = document.createElement('div');
-        card.style.padding = '20px';
-        card.style.backgroundColor = '#ffffff';
-        card.style.borderRadius = '8px';
-        card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-        card.style.margin = '15px';
-        card.style.maxWidth = '500px';
-
-        var title = document.createElement('h2');
-        title.style.marginTop = '0';
-        title.style.color = '#1f4e79';
-        title.innerText = '📄 Экспорт сведений об устройстве';
-        card.appendChild(title);
-
-        var desc = document.createElement('p');
-        desc.style.color = '#555';
-        desc.innerText = 'Сгенерируйте и скачайте сводный PDF-отчет для устройства (' + (node ? node.name : 'N/A') + ').';
-        card.appendChild(desc);
-
-        var btn = document.createElement('button');
-        btn.className = 'btn medium blue';
-        btn.style.padding = '8px 16px';
-        btn.style.fontSize = '14px';
-        btn.style.cursor = 'pointer';
-        btn.innerText = 'Скачать PDF отчет';
-        btn.onclick = function() {
-            obj.exportDeviceToPDF(node || (typeof currentNode !== 'undefined' ? currentNode : null));
-        };
-        card.appendChild(btn);
-
-        container.appendChild(card);
-    };
-
-    // Логика генерации PDF
-    obj.exportDeviceToPDF = function(deviceObj) {
-        var dev = deviceObj || (typeof currentNode !== 'undefined' ? currentNode : null);
-        if (!dev) { alert("Ошибка: Устройство не выбрано."); return; }
-        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-            var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script.onload = function() { obj.generatePDF(dev); };
-            script.onerror = function() { alert("Ошибка загрузки jsPDF"); };
-            document.head.appendChild(script);
-        } else {
-            obj.generatePDF(dev);
-        }
-    };
-
-    obj.generatePDF = function(dev) {
-        var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
-        var doc = new jsPDF();
-        doc.setFillColor(31, 78, 121);
-        doc.rect(0, 0, 210, 25, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("MeshCentral - Device Report", 14, 16);
-        doc.setTextColor(40, 40, 40);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("System Information", 14, 38);
-        doc.setDrawColor(200, 200, 200);
-        doc.line(14, 40, 196, 40);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        var startY = 48, lineHeight = 7;
-        [["Device Name:", dev.name], ["Node ID:", dev._id], ["Hostname:", dev.hostname],
-         ["OS:", dev.osdesc], ["IP Address:", dev.ip],
-         ["Status:", (dev.conn & 1) ? "Online" : "Offline"],
-         ["Report Generated:", new Date().toLocaleString()]
-        ].forEach(function(item) {
-            doc.setFont("helvetica", "bold");
-            doc.text(item[0] || "", 14, startY);
-            doc.setFont("helvetica", "normal");
-            doc.text(String(item[1] || "N/A"), 65, startY);
-            startY += lineHeight;
-        });
-        doc.save((dev.name || "device").replace(/[^a-z0-9]/gi, '_').toLowerCase() + "_report.pdf");
+        container.innerHTML = '<div style="padding:30px;font-size:18px;color:green;">✅ Тест успешен! Вкладка создана и работает.</div>';
     };
 
     return obj;
